@@ -208,33 +208,34 @@ Esquema             Mapping
 Tupla               Document
 Coluna              Attribute
 
-Conjunto
+Conjunto: Um cluster Elasticsearch é um grupo de uma ou mais instâncias de nó que estão conectadas. 
+O poder de um cluster Elasticsearch está na distribuição de tarefas, pesquisa e indexação em todos os nós do 
+cluster.
 
-Um cluster Elasticsearch é um grupo de uma ou mais instâncias de nó que estão conectadas. O poder de um cluster 
-Elasticsearch está na distribuição de tarefas, pesquisa e indexação em todos os nós do cluster.
+Node (Nó): Um nó é um único servidor que faz parte de um cluster. Um nó armazena dados e participa dos recursos 
+de indexação e pesquisa do cluster. Um nó Elasticsearch pode ser configurado de diferentes maneiras:
 
-Node (Nó)
-Um nó é um único servidor que faz parte de um cluster. Um nó armazena dados e participa dos recursos de 
-indexação e pesquisa do cluster. Um nó Elasticsearch pode ser configurado de diferentes maneiras:
-
-Node Master (nó mestre) – controla o cluster Elasticsearch e é responsável por todas as operações de todo o 
+Node Master (nó mestre): Controla o cluster Elasticsearch e é responsável por todas as operações de todo o 
 cluster, como criar / excluir um índice e adicionar / remover nós.
 
-Data Node (nó de dados) – armazena dados e executa operações relacionadas a dados, como pesquisa e agregação.
+Data Node (nó de dados): Armazena dados e executa operações relacionadas a dados, como pesquisa e agregação.
 
-Client Node (nó cliente) – encaminha solicitações de cluster para o nó mestre e solicitações relacionadas a 
+Client Node (nó cliente): Encaminha solicitações de cluster para o nó mestre e solicitações relacionadas a 
 dados para nós de dados.
 
-Shards (Fragmentos)
-Elasticsearch fornece a capacidade de subdividir o índice em várias partes chamadas shards. Cada fragmento é 
-em si um “índice” totalmente funcional e independente que pode ser hospedado em qualquer nó de um cluster. 
+Shards (Fragmentos): Elasticsearch fornece a capacidade de subdividir o índice em várias partes chamadas shards. 
+Cada fragmento é em si um “índice” totalmente funcional e independente que pode ser hospedado em qualquer nó de 
+um cluster. 
 Distribuindo os documentos em um índice em vários fragmentos e distribuindo esses fragmentos em vários nós, 
 o Elasticsearch pode garantir redundância, o que protege contra falhas de hardware e aumenta a capacidade de 
 consulta conforme os nós são adicionados a um cluster.
 
-Réplicas
-Elasticsearch permite que você faça uma ou mais cópias dos fragmentos de seu índice, que são chamados de 
-“fragmentos de réplica” ou apenas “réplicas”. Basicamente, um shard de réplica é uma cópia de um shard primário. Cada documento em um índice pertence a um fragmento primário. As réplicas fornecem cópias redundantes de seus dados para proteger contra falhas de hardware e aumentar a capacidade de atender a solicitações de leitura, como pesquisa ou recuperação de um documento.
+Réplicas: Elasticsearch permite que você faça uma ou mais cópias dos fragmentos de seu índice, que são chamados 
+de “fragmentos de réplica” ou apenas “réplicas”. Basicamente, um shard de réplica é uma cópia de um shard primário. 
+Cada documento em um índice pertence a um fragmento primário. As réplicas fornecem cópias redundantes de seus 
+dados para proteger contra falhas de hardware e aumentar a capacidade de atender a solicitações de leitura, 
+como pesquisa ou recuperação de um documento.
+
 Fonte": https://www.infomach.com.br/o-que-e-elasticsearch-como-funciona-e-para-que-serve/
 
 Outras fontes:
@@ -405,3 +406,332 @@ https://www.elastic.co/guide/en/elasticsearch/reference/current/search-request-s
 índice ao paginar mais de 10.000 ocorrências, use o search_afterparâmetro com um ponto no tempo (PIT).*
 
 https://www.elastic.co/guide/en/elasticsearch/reference/current/paginate-search-results.html#scroll-search-results
+
+Aula 4
+
+
+GET catalogo/_mapping
+
+PUT /catalogo/_doc/1
+{
+  "nome": "Patrick von Steppat",
+  "interesses": [
+    "computação",
+    "culinária",
+    "cinema"
+  ],
+  "cidade": "Rio de Janeiro",
+  "formação": "Gastronomia",
+  "estado": "RJ",
+  "país": "Brasil"
+}
+
+PUT /catalogo/_doc/1
+{
+  "nome": "Patrick von Steppat 2",
+  "interesses": [
+    "computação",
+    "culinária",
+    "cinema"
+  ],
+  "cidade": "Rio de Janeiro",
+  "formação": "Gastronomia",
+  "estado": "RJ",
+  "país": "Brasil",
+  "nascimento": "1984-10-03T12:00:00Z"
+}
+
+GET catalogo/_doc/1
+
+GET catalogo/_mapping
+
+Com Elasticsearch rodando, envie através da interface do console “Dev Tools” do Kibana uma 
+requisição GET para:
+
+GET catalogo/_mapping
+
+text
+
+Correto! As strings são automaticamente inferidas pelo ElasticSearch como tipo text.
+
+Cadastre um novo documento no nosso catálogo por meio do console Dev Tools do Kibana.
+
+Envie um HTTP POST para /catalogo/_doc com o JSON abaixo:
+
+{
+  "nome": "Super Mario",
+  "interesses": [
+    "computação",
+    "games",
+    "carros"
+  ],
+  "força": 3,
+  "velocidade": 55.3,
+  "cidade": "Kyoto",
+  "formação": "Encanador",
+  "estado": "Honshu",
+  "país": "Japão",
+  "nascimento": "1982-01-21"
+}
+
+Quais são os tipos interferidos para os atributos força e velocidade?
+
+long e float
+
+Correto! O atributo força é do tipo long e velocidade de tipo float!
+
+Faça um PUT para /catalogo/_mapping/ com o seguinte JSON:
+
+{
+    "properties": {
+        "pulo": {
+            "type": "integer"
+        }
+    }
+}
+
+PUT /catalogo/_mapping
+{
+    "properties": {
+        "pulo": {
+            "type": "integer"
+        }
+    }
+}
+
+Mapping (mapeamento)
+
+SQL
+
+Tabela: pessoas
+Coluna: nome -> varchar(150)
+
+O Elasticsearch define automaticamente os tipos a partir do documento!
+
+1. Os tipos de dados “core”:
+a. strings,
+b. números
+c. e datas
+
+2. Os tipos “complexos”
+a. arrays
+b. IPv4
+c. IPv6
+d. Informação geoespacial
+
+Aula 5
+
+GET catalogo/_search?q=musica
+
+GET catalogo/_search?q=música
+
+GET catalogo/_analyze
+{
+  "text": "Eu nasci há 10 mil (sim, isso mesmo, 10 mil) anos atrás"
+}
+
+GET catalogo/_analyze
+{
+  "analyzer": "simple", 
+  "text": "Eu nasci há 10 mil (sim, isso mesmo, 10 mil) anos atrás"
+}
+
+GET catalogo/_analyze
+{
+  "analyzer": "whitespace", 
+  "text": "Eu nasci há 10 mil (sim, isso mesmo, 10 mil) anos atrás"
+}
+
+GET catalogo/_analyze
+{
+  "analyzer": "portuguese", 
+  "text": "Eu nasci há 10 mil (sim, isso mesmo, 10 mil) anos atrás"
+}
+
+PUT /catalogo_v2
+{
+  "settings": {
+    "index": {
+      "number_of_shards": 3,
+      "number_of_replicas": 0
+    }
+  },
+  "mappings": {
+    "properties": {
+      "cidade": {
+        "type": "text",
+        "index": true,
+        "analyzer": "portuguese"
+      },
+      "estado": {
+        "type": "text"
+      },
+      "formação": {
+        "type": "text",
+        "index": true,
+        "analyzer": "portuguese"
+      },
+      "interesses": {
+        "type": "text",
+        "index": true,
+        "analyzer": "portuguese"
+      },
+      "nome": {
+        "type": "text",
+        "index": true,
+        "analyzer": "portuguese"
+      },
+      "país": {
+        "type": "text",
+        "index": true,
+        "analyzer": "portuguese"
+      }
+    }
+  }
+}
+
+POST /catalogo_v2/_doc/1
+{
+    "nome": "João Silva",
+    "interesses": ["futebol", "música", "literatura"],
+    "cidade": "São Paulo",
+    "formação": "Letras",
+    "estado": "SP",
+    "país": "Brasil"
+}
+
+GET catalogo/_search?q=música
+
+GET catalogo/_search?q=musica
+
+GET catalogo_v2/_search?q=música
+
+GET catalogo_v2/_search?q=musica
+
+|| 
+
+Música
+música
+Musica
+musica
+MUSICA
+musicA
+
+Baseado na seguinte URI:
+
+GET /_analyze
+{
+  "analyzer":"ANALYZER_AQUI",
+  "text":"Bem vindo ao curso de ElasticSearch da Alura"
+}
+
+Qual analyzer do ElasticSearch deve ser utilizado no lugar da string ANALYZER_AQUI, para obter o seguinte 
+resultado como resposta?
+
+{
+  "tokens" : [
+    {
+      "token" : "Bem",
+      "start_offset" : 0,
+      "end_offset" : 3,
+      "type" : "word",
+      "position" : 0
+    },
+    {
+      "token" : "vindo",
+      "start_offset" : 4,
+      "end_offset" : 9,
+      "type" : "word",
+      "position" : 1
+    },
+    {
+      "token" : "ao",
+      "start_offset" : 10,
+      "end_offset" : 12,
+      "type" : "word",
+      "position" : 2
+    },
+    {
+      "token" : "curso",
+      "start_offset" : 13,
+      "end_offset" : 18,
+      "type" : "word",
+      "position" : 3
+    },
+    {
+      "token" : "de",
+      "start_offset" : 19,
+      "end_offset" : 21,
+      "type" : "word",
+      "position" : 4
+    },
+    {
+      "token" : "ElasticSearch",
+      "start_offset" : 22,
+      "end_offset" : 35,
+      "type" : "word",
+      "position" : 5
+    },
+    {
+      "token" : "da",
+      "start_offset" : 36,
+      "end_offset" : 38,
+      "type" : "word",
+      "position" : 6
+    },
+    {
+      "token" : "Alura",
+      "start_offset" : 39,
+      "end_offset" : 44,
+      "type" : "word",
+      "position" : 7
+    }
+  ]
+}
+
+whitespace
+
+Correto! O analyzer whitespace (ou analyzer de espaço em branco) quebra o texto por espaços em branco e não
+altera a caixa das letras. Ao substituirmos a string ANALYZER_AQUI por whitespace, a URI ficará assim:
+
+GET /_analyze?analyzer=whitespace&text=Bem vindo ao curso de ElasticSearch do Alura
+
+E obteremos a resposta desejada no enunciado do exercício.
+
+O padrão do Elasticsearch ao realizar as buscas, é de buscar documentos que contenham um termo ou outro. 
+Por exemplo:
+
+GET /catalogo_v2/_search?q=musica+brasil
+
+Logo, o resultado dessa busca será documentos que contenham uma musica ou brasil. No caso do novo índice, 
+sem distinção entre acentos, letras maiúsculas ou minúsculas.
+
+Mas se quisermos os documentos que obrigatoriamente contenham ambos os termos, como deverá ser a URI?
+
+GET /catalogo_v2/_search?q=musica+AND+brasil
+
+Correto! O padrão do Elasticsearch é buscar no documento um termo ou (OR, em inglês) outro. Para buscar 
+documentos que contenham os dois termos (musica e brasil), nós precisamos utilizar o AND. Atenção para a 
+caixa alta, se for em caixa baixa, o Elasticsearch interpretará como mais um termo a ser buscado.
+
+Objetos aninhados são mapeados de maneira semelhante a objetos não aninhados. Basta utilizar como tipo de 
+dados object e definir as propriedades. Esta abordagem funciona de forma recursiva.
+
+Para saber mais, acesse o link a seguir:
+
+https://www.elastic.co/guide/en/elasticsearch/guide/current/complex-core-fields.html
+
+*AVISO : As versões 2.x do Elasticsearch passaram de suas datas de EOL . Se você estiver executando uma versão 
+2.x, recomendamos que você atualize.
+
+Esta documentação não é mais mantida e pode ser removida. Para obter as informações mais recentes, consulte a 
+documentação atual do Elasticsearch .
+*
+
+Analyzers Comuns
+● Espaço em branco
+● Padrão (standard)
+● Simples
+● Idioma (Portuguese,
+English, etc.)
+
