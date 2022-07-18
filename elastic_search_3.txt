@@ -1,0 +1,1838 @@
+Quais das afirmações abaixo está verdadeira?
+
+Usando Query estamos preocupados quão bem a nossa busca casa com o documento
+
+Correto!
+
+Ao executar uma query recebemos em cada resultado um atributo _score que indica a similaridade ou relevância do 
+documento com nossa busca.
+
+Por exemplo, executando no DevTools Console do Kibana a query:
+
+GET /produtos/v1/_search?q=digital
+R
+ecebemos os resultados com o atributos _score que define a similaridade:
+
+{
+  "took": 6,
+  "timed_out": false,
+  "_shards": {
+    "total": 3,
+    "successful": 3,
+    "failed": 0
+  },
+  "hits": {
+    "total": 3,
+    "max_score": 0.9739862,
+    "hits": [
+      {
+        "_index": "produtos",
+        "_type": "v1",
+        "_id": "AVw65N-FkOCjmNgW1uWA",
+        "_score": 0.9739862,
+        "_source": {
+          "nome": "Big Data: Técnicas e tecnologias para extração de valor dos dados",
+          "categoria": "Livros",
+          "subcategoria": "Tecnologia",
+          "tags": [
+            "impresso",
+            "digital",
+            "larga escala",
+            "computação"
+          ],
+          "fornecedor": "Casa do Código",
+          "preco": 49.9
+        }
+      },
+      {
+        "_index": "produtos",
+        "_type": "v1",
+        "_id": "AVw65NqCkOCjmNgW1uV_",
+        "_score": 0.16948202,
+        "_source": {
+          "nome": "A história do futebol brasileiro",
+          "categoria": "Livros",
+          "subcategoria": "Esportes",
+          "tags": [
+            "impresso",
+            "digital",
+            "esportes",
+            "futebol"
+          ],
+          "fornecedor": "Casa do Código",
+          "preco": 59.9
+        }
+      },
+      {
+        "_index": "produtos",
+        "_type": "v1",
+        "_id": "AVw65OnzkOCjmNgW1uWB",
+        "_score": 0.16948202,
+        "_source": {
+          "nome": "Scala: Como escalar sua produtividade",
+          "categoria": "Livros",
+          "subcategoria": "Tecnologia",
+          "tags": [
+            "impresso",
+            "digital",
+            "scala",
+            "programação funcional",
+            "computação",
+            "imutabilidade"
+          ],
+          "fornecedor": "Casa do Código",
+          "preco": 69.9
+        }
+      }
+    ]
+  }
+}
+
+Ainda não usamos os filtros na prática mas já aprendemos algumas características.
+
+Sobre filtros podemos dizer:
+
+.. caso desejamos uma ordem, devemos definir na busca.
+
+Correto, como não tem _score devemos especificar a ordem
+
+... são binários (o resultado existe ou não).
+
+... não possuem _score.
+
+Correto, o _score só existe na query.
+
+Resumindo, aprendemos que filtros:
+
+Cacheam os resultados (queries não).
+Não possuem _score, pois só interesse se existe ou não (resultado binário)
+Caso desejamos uma ordem, devemos definir na busca.
+
+Veja a pesquisa abaixo:
+
+GET /produtos/v1/_search
+{
+  "query" : {
+    "match": {
+      "categoria": "livros"
+    }
+  }
+}
+
+Qual das afirmações abaixo está verdadeira
+
+Estamos executando uma query procurando produtos da categoria "livros"
+
+Quais das palavras abaixo fazem parte Query DSL?
+
+must
+should
+must not
+
+Alem do must, must_not e should existe a clausula filter.
+
+Todas as clausulas tem em comum que precisam estar dentro do elemento bool e por isso se chama de Bool Query. 
+Mais infos na documentação do Elasticsearch:
+
+https://www.elastic.co/guide/en/elasticsearch/reference/5.2/query-dsl-bool-query.html
+
+Agora execute uma query buscando todos os produtos da categoria Livros e possuem a tag esporte.
+
+Use o corpo da requisição para definir a query, use o operador bool e must.
+
+Segue uma possível solução:
+
+GET /produtos/v1/_search
+{
+  "query" : {
+    "bool": {
+      "must": [
+        {"match": {"categoria": "Livros" }},
+        {"match": {"tags": "esporte" }}
+      ]
+    }
+  }
+}
+
+O must representa o AND e, como não queremos nenhum "_score" (sem relevância), devemos "embrulhar" a clausula 
+must com bool.
+
+O resultado é:
+
+{
+  "took": 2,
+  "timed_out": false,
+  "_shards": {
+    "total": 3,
+    "successful": 3,
+    "failed": 0
+  },
+  "hits": {
+    "total": 1,
+    "max_score": 0.9625151,
+    "hits": [
+      {
+        "_index": "produtos",
+        "_type": "v1",
+        "_id": "AVw65NqCkOCjmNgW1uV_",
+        "_score": 0.9625151,
+        "_source": {
+          "nome": "A história do futebol brasileiro",
+          "categoria": "Livros",
+          "subcategoria": "Esportes",
+          "tags": [
+            "impresso",
+            "digital",
+            "esportes",
+            "futebol"
+          ],
+          "fornecedor": "Casa do Código",
+          "preco": 59.9
+        }
+      }
+    ]
+  }
+}
+
+Agora defina uma query que busca todos os produtos das categorias calçados ou roupa.
+
+Como vimos na aula devemos usar bool com should para definir o OR:
+
+GET /produtos/v1/_search
+{
+  "query" : {
+    "bool": {
+      "should": [
+        {"match": {"categoria": "Calçados" }},
+        {"match": {"categoria": "Roupa" }}
+      ]
+    }
+  }
+}
+
+Vamos praticar mais um pouco a Query DSL. Para isso defina uma query que busca todos os produtos da categoria 
+"Livros" que não possuem a tag "computação"!
+
+Nessa query devemos usar a clausula must e must_not, novamente "embrulhado" dentro do elemento bool:
+
+GET /produtos/v1/_search
+{
+  "query" : {
+    "bool": {
+      "must": {"match": {"categoria": "livros" }},
+      "must_not": {"match": {"tags": "computação"}}
+    }
+  }
+}
+
+Você deve ter recebido o seguinte resultado:
+
+{
+  "took": 1,
+  "timed_out": false,
+  "_shards": {
+    "total": 3,
+    "successful": 3,
+    "failed": 0
+  },
+  "hits": {
+    "total": 1,
+    "max_score": 0.18232156,
+    "hits": [
+      {
+        "_index": "produtos",
+        "_type": "v1",
+        "_id": "AVw65NqCkOCjmNgW1uV_",
+        "_score": 0.18232156,
+        "_source": {
+          "nome": "A história do futebol brasileiro",
+          "categoria": "Livros",
+          "subcategoria": "Esportes",
+          "tags": [
+            "impresso",
+            "digital",
+            "esportes",
+            "futebol"
+          ],
+          "fornecedor": "Casa do Código",
+          "preco": 59.9
+        }
+      }
+    ]
+  }
+}
+
+Qual é a diferença entre term e match?
+
+O match usa os analyzers definidas e o term não aplica nenhum analyzer (exact match).
+
+O term sempre busca exatamente o mesmo string definido na busca, sem aplica nenhum analyzer antes. O match já 
+usa os mesmos analyzers desse campo.
+
+Por esse motivo guardamos o campo original no index. Usando o term junto com campo original fará algo que 
+estamos acostumado no mundo SQL. Por exemplo, a query abaixo procura pela categoria livro que na verdade se 
+chama de Livros:
+
+GET /produtos/v1/_search
+{
+  "query" : {
+        "match" : {"categoria": "livro" }
+    }
+}
+Ao executar a pesquisa em cima entramos 3 documentos, mas se testarmos com term encontramos nada:
+
+GET /produtos/v1/_search
+{
+  "query" : {
+        "term" : {"categoria": "livro" }
+    }
+}
+Nem adianta colocar Livros como valor:
+
+GET /produtos/v1/_search
+{
+  "query" : {
+        "term" : {"categoria": "Livros" }
+    }
+}
+
+Mas se usamos o campo original encontramos os 3 documentos:
+
+GET /produtos/v1/_search
+{
+  "query" : {
+        "term" : {"categoria.original": "Livros" }
+    }
+}
+
+Veja a pesquisa abaixo:
+
+GET /produtos/v1/_search
+{
+  "query" : {
+    "range": {
+      "preco": {
+        "lte": 50,
+        "gte": 20
+      }
+    }
+  }
+}
+
+Qual afirmação melhor define o que estamos pesquisando?
+
+Todos os produtos cujo preço é maior ou igual de 20 e menor ou igual de 50.
+
+
+Vimos na aula que a pesquisa usando range é útil para buscar documentos menor ou/e maior do que um determinado 
+valor.
+
+Agora defina uma query que busca todos os produtos maior ou igual a R$ 50,00.
+
+Devemos definir uma query em conjunto com `range`. Dentro do `range` declaramos o atributo desejado e o 
+operador `gte` (*greater than or equals*): 
+
+GET /produtos/v1/_search { 
+    "query" : { 
+        "range": { 
+            "preco": { 
+                "gte": 50 
+            } 
+        } 
+    }
+}
+
+A query retorna 4 documentos onde todos tem o `_score` 1 (não tem documento mais relevante do que outros.) 
+Mais infos sobre a *Range Query* na documentação: 
+https://www.elastic.co/guide/en/elasticsearch/reference/5.2/query-dsl-range-query.html
+
+Já falamos que a clausula filter faz parte da Bool Query do Elasticsearch 5. Em outras palavras, o filter, 
+como must, must_not e should, sempre deve ser embrulhado pelo elemento bool. O interessante é que podemos 
+combinar o filter com as outras clausulas. Isso é algo muito comum no dia a dia. Filtramos os documentos para 
+aplicar depois uma query. Nesse exemplo, vamos filtrar os produtos pelo preço para depois pesquisar pela 
+categoria:
+
+1) Primeiro define o esqueleto da pesquisa, com query e bool:
+
+GET /produtos/v1/_search
+{
+  "query : {
+    "bool": {
+      "filter": {
+          //aqui vem mais
+}}}}
+
+2) Depois adicione o elemento range no filtro e executa a query:
+
+GET /produtos/v1/_search
+{
+  "query" : {
+    "bool": {
+      "filter": {
+        "range": {"preco": {"lte": 100}}
+}}}}
+
+Você deve receber 4 produtos, todos com o _score zerado.
+
+3) Agora adiciona antes do filter, mas depois do bool a clausula must -> match para buscar produtos pela 
+categoria esportes:
+
+GET /produtos/v1/_search
+{
+  "query" : {
+    "bool": {
+      "must": {
+        "match": {"tags": "esportes"}},
+      "filter": {
+        "range": {"preco": {"lte": 100}}
+}}}}
+
+Dentro do `filter` podemos combinar várias cláusulas no entanto é preciso usar um novo elemento `bool`, 
+por exemplo: 
+GET /produtos/v1/_search { 
+    "query" : { 
+        "bool": { 
+            "must": { 
+                "match": {
+                    "tags": "esportes"
+                }
+            }, 
+            "filter": { 
+                "bool": 
+                {"must": [ 
+                            {"range": {"preco": {"lte": 100}}}, 
+                            {"term": {"categoria.original": "Livros"}} 
+                        ]
+                }
+            }
+        }
+    }
+}
+
+Você sabia que o Elasticsearch possui uma funcionalidade interessante chamada Date Math que nos ajuda a fazer 
+contas com datas para buscas que envolvem ranges.
+
+Veja o guia da documentação
+
+https://www.elastic.co/guide/en/elasticsearch/reference/current/common-options.html#date-math
+
+Você sabia que podemos combinar tudo o que aprendemos sobre a Query DSL com agregações? Assim como fizemos via 
+Kibana no primeiro curso, a Query DSL vai além do que vimos e permite que combinemos filtros com agregações em 
+uma mesma requisição.
+
+Veja o link:
+
+https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations.html
+
+
+Relacionado com o calculo do score, qual das afirmativas abaixo está correta?
+
+O calculo do score é algo bastante complexo e extenso. Na aula queríamos chamar a atenção da importância, 
+no entanto há ainda muito a falar.
+
+A documentação do Elasticsearch destaca 3 itens para o calculo:
+
+Term frequency
+
+Quantas vezes o termo procurado se encontra dento do campo? Um termo encontrado mais vezes é mais relevante no 
+cálculo.
+
+Field-length norm
+
+Qual é o tamanho do field? Matchs em fields mais longos terão um score menor, pois por exemplo em um campo com 3 
+palavras, cada uma dessas palavras é importante para descrever o campo, pois ele é bem curto. Agora em um campo 
+com 100 palavras, é provável que uma única tenha menos importância perante todas as outras. Também é levado em 
+consideração o tamanho médio dos campos de todos os documentos, por exemplo se todos os campos do seu documento 
+tem 80 palavras em média, e você está fazendo a busca em um campo com tamanho de 5 palavras, é mais provável 
+que este campo seja mais importante, logo esta relação entre tamanho do campo buscado e tamanho dos campos em 
+gerais também é considerada.
+
+Inverse document frequency
+
+Quantas vezes o termo procurado pode ser encontrado em todos os documentos buscados? Um termo que aparece mais 
+vez nos documentos é menos importante para o calculo do que um termo que apareceu exclusivamente em um documento.
+Como você pode ver, o cálculo preciso do score é bastante complicado, mas não se preocupe que no próximo 
+capítulo veremos um meio de aumentar o score de determinados resultados para facilitar este processo de 
+determinar quem vem primeiro nas listagens!
+
+Veja a pesquisa seguinte:
+
+GET /produtos/v1/_search
+{
+  "query" : {
+    "match": {
+      "nome": {
+        "query" : "big data futebol brasileiro"
+}}}}
+
+Qual operador é utilizado por padrão entre os termos da query?
+
+or
+
+Você pode imaginar que a query usa por padrão o operator or, como no exemplo abaixo:
+
+GET /produtos/v1/_search
+{
+  "query" : {
+    "match": {
+      "nome": {
+        "query" : "big data futebol brasileiro",
+        "operator": "or"
+}}}}
+
+Agora com você, teste uma vez a diferença entre operador or e and, caso não tenha feito ainda.
+
+Operador or:
+
+GET /produtos/v1/_search
+{
+  "query" : {
+    "match": {
+      "nome": {
+        "query" : "big futebol",
+        "operator": "or"
+}}}}
+
+E para ver a diferença, a mesma query só com operador and:
+
+GET /produtos/v1/_search
+{
+  "query" : {
+    "match": {
+      "nome": {
+        "query" : "big futebol",
+        "operator": "and"
+}}}}
+
+Lembrando que operador or não é preciso usar pois já é o padrão do Elasticsearch.
+
+Veja a query abaixo que usa minimum_should_match:
+
+GET /produtos/v1/_search
+{
+  "query" : {
+    "match": {
+      "nome": {
+        "query" : "big data futebol brasileiro",
+        "minimum_should_match": "100%"
+}}}}
+
+Relacionado a essa query, qual das afirmativas está correta?
+
+Todos os termos devem aparecer o atributo (field) nome, mas não exatamente nessa ordem.
+
+Correto, todas as palavras devem estar no atributo pesquisado, mas a ordem não importa. 
+Por exemplo, se o produto é "Como o Futebol brasileiro é influenciado pelo Big Data" faria parte dos resultados.
+
+Faço o teste com minimum_should_match variando a percentagem, por exemplo 50 e 100:
+
+GET /produtos/v1/_search
+{
+  "query" : {
+    "match": {
+      "nome": {
+        "query" : "big futebol",
+        "minimum_should_match": "50%"
+}}}}
+
+Você também pode utilizar o número inteiro como valor para minimum_should_match, por exemplo podemos definir que 
+queremos encontrar 2 palavras de 3 possíveis:
+
+GET /produtos/v1/_search
+{
+  "query" : {
+    "match": {
+      "nome": {
+        "query" : "big futebol brasileiro",
+        "minimum_should_match": "2"
+}}}}
+
+Elasticsearch nos permite usar o mesmo termo para buscar em vários campos sem que precisemos copiar e colar a 
+consulta para cada campo. 
+Esta funcionalidade é conhecida como busca cross campo.
+
+Veja o link da documentação:
+
+https://www.elastic.co/guide/en/elasticsearch/guide/master/_cross_fields_entity_search.html
+
+Digamos que uma determinada loja deseja incentivar a venda de seus itens esportivos para que ela consiga renovar 
+os estoques e se livrar dos itens encalhados. Para isto, ela fará uma grande promoção e gostaria de dar ênfase 
+nas camisetas, pois é o tipo de item que mais está sobrando nos estoques. Qual das opções abaixo nos retorna 
+uma listagem de itens esportivos, porém dando uma ênfase nos scores das camisetas?
+
+GET /produtos/v1/_search
+{
+  "query" : {
+    "bool": {
+      "should":[
+        {"match": {"categoria": "esportes" }},
+        {"match": {"subcategoria": "esportes" }},
+        {"match": {"nome": { 
+                      "query": "camiseta",
+                      "boost": 2 }
+                  }
+        }
+      ]
+    }
+  }
+}
+
+Correto! Estamos aqui filtrando por todos os itens que tenham em suas categorias ou subcategorias os termos esporte. 
+Além disto, estamos dando um boost no score dos itens que possuem camiseta no nome
+
+Qual das buscas abaixo nos retorna o itens com relação a big data mas reduzindo a sua relevância em 20%?
+
+GET /produtos/v1/_search
+{
+  "query" : {
+    "match": {
+            "nome": {
+              "query" : "big data",
+              "boost": "0.8"
+            }
+          }
+  }
+}
+
+Correta! Se desejamos reduzir em 20% o escore, basta utilizarmos o multiplicador 0.8 para alcançar o valor desejado.
+
+Digamos que um determinado produto esteja com um score de 0.8 e que desejamos aplicar um boost de 2.0 nele. 
+Qual será o resultado final do valor do score?
+
+Aproximadamente 1.6
+
+
+Correto! o boost é uma sugestão que damos ao elastic search para aumentar o score de termo. 
+Não podemos garantir que o valor será exatamente 1.6, mas sabemos que o elastic search tentará seguir a 
+nossa indicação e o valor deve ser próximo a isto.
+
+Faça uma busca que traga resultados que tenham os tópicos big data OU futebol brasileiro, 
+mas aumentando o score em um multiplicador 1.5 dos resultados que envolverem big data
+
+Uma possível solução é como a abaixo:
+
+GET /produtos/v1/_search
+{
+  "query" : {
+    "bool": {
+      "should": [
+        {
+          "match": {
+            "nome": {
+              "query" : "big data",
+              "boost": 1.5
+              }
+          }
+        },
+        {
+          "match": {
+            "nome": {
+              "query" : "brasileiro futebol"
+            }
+          }
+        }
+      ]
+    }
+  }
+}
+Estamos buscando por um resultado que contenha os termos pedidos e estamos dando um boost no score 
+de big data em 1.5x o valor original.
+
+Agora faça uma busca pelos termos chuteira OU camiseta, porém reduzindo o score de camiseta em aproximadamente 20%.
+
+Uma possível solução segue como abaixo:
+
+GET /produtos/v1/_search
+{
+  "query" : {
+    "bool": {
+      "should": [
+        {
+          "match": {
+            "nome": {
+              "query" : "camiseta",
+              "boost": 0.8
+              }
+          }
+        },
+        {
+          "match": {
+            "nome": {
+              "query" : "chuteira"
+            }
+          }
+        }
+      ]
+    }
+  }
+}
+Como desejávamos uma redução de 20% no score da camiseta, aplicamos um boost de 0.8, o que fará com que o score seja 
+reduzido para aproximadamente 80% do seu valor, ou seja, descontando os 20% que desejávamos.
+
+Sobre as queries de prefixo, é correto afirmar:
+
+Toda consulta de uma query de prefixo é bastante cara em relação ao seu custo computacional.
+
+Correto, precisamos utilizar com bastante parcimônia este recurso, pois ele é bastante caro computacionalmente falando.
+
+Elas buscam apenas nos começo da palavra.
+
+Como o próprio nome indica, a query de prefixo busca apenas nos prefixos das palavras.
+
+Em relação ao score dos resultados de uma query de prefixo, o que podemos afirmar ?
+
+Todas os resultados possuem score igual a 1, afinal ou uma palavra começa com determinado prefixo ou não
+
+Correto, se a palavra possuí o prefixo, o score fica valendo 1 automaticamente.
+
+Sobre as match phrase queries, podemos afirmar que:
+
+As match phrase queries nos ajudam a fazer uma busca similar a do Google, aonde os termos buscados são comparados com os prefixos das frases, 
+comparando a similaridade entre o termo e as frases.
+
+Correto, o match phrase query é excelente nisso , ele nos retorna no valor do score qual a frase mais próxima de nosso índice ao termo buscado.
+
+Execute uma query de prefixo que busque em nosso indíce pelos documentos que tem tags que comecem com ama.
+
+A query pode ser executa assim:
+
+GET /produtos/v1/_search
+{
+  "query" : {
+    "prefix": {
+      "tags": "ama"
+    }
+  }
+}
+
+Lembre-se que as tags de prefixo são custosas, e devem ser utilizadas com parcimônia.
+
+Você sabia que podemos validar uma query ou mesmo entender como ela será executada? Este é um recurso muito útil para saber se uma consulta vai 
+ser muito custosa para o cluster e se pode ser melhorada. Veja a documentação oficial:
+
+https://www.elastic.co/guide/en/elasticsearch/reference/current/search-validate.html
+
+
+Fernanda deseja realizar uma busca por policlínica, mas deseja que a busca seja capaz de encontrar a palavra por:
+
+poli
+cli
+clínica
+
+Queremos pedaços da mesma palavra apontando para o documento e vimos que o N-Gramas pode nos ajudar.
+
+Marque as alternativas verdadeiras sobre N-Gramas:
+
+No N-Gramas ancorado, há a mesma ideia de janelamento, porém, o início da janela é fixo e temos a quantidade mínima e máxima de caracteres.
+
+N-Gramas são uma janela móvel dos termos.
+
+Para tokenizarmos um texto usando N-grama, basta utilizarmos a api Analyser que já vimos. Marque a a opção que nos mostrará como o documento ficará tokenizado:
+
+GET /_analyse
+{
+    "tokenizer": {
+        "type": "ngram"
+    },
+    "text": "Big Data"
+}
+
+Marque a opção com uma query do tipo ngram, com valor mínimo de 3 e máximo de 7.
+
+GET /_analyze 
+{
+
+    "tokenizer": {
+        "type": "ngram",
+        "min_gram": 3
+        "max_gram": 7
+    },
+    "text": "Good day"
+
+}
+
+ngram: Cursor se move
+edge_ngram: Cursor não se move
+
+Como apresentado no vídeo gere o novo índice com baseado no comando abaixo:
+
+PUT /indice_ngramas
+{
+  "settings": {
+    "index": {
+      "number_of_shards": 1,
+      "number_of_replicas": 0
+    },
+    "analysis" : {
+      "filter": {
+        "filtro_autocomplete": {
+          "type": "edge_ngram",
+          "min_gram": 2,
+          "max_gram": 20
+        }
+      },
+      "analyzer": {
+        "autocomplete" : {
+          "type": "custom",
+          "tokenizer": "standard",
+          "filter" : [
+            "lowercase",
+            "filtro_autocomplete"
+          ]
+}}}}}
+
+Repare que não trabalhamos com sinônimos nem analyzer português. 
+Estamos usando apenas o *tokenizer* padrão, filtro de *lowercase* e o filtro *autocomplete* com o *edge_ngram*.
+
+Baseado no novo índice analise a palavra "Elastic":
+
+GET /indice_ngramas/_analyze?analyzer=autocomplete&text=Elastic
+
+Quantas entradas serão geradas no índice invertido?
+
+6
+
+São 6 entradas:
+
+{ "tokens": [
+    {
+      "token": "el",
+...
+    },{
+      "token": "ela",
+...
+    },{
+      "token": "elas",
+..
+    },{
+      "token": "elast",
+..
+    },{
+      "token": "elasti",
+...
+    }, {
+      "token": "elastic",
+...
+}]}
+
+Repare que a primeira entrada possui apenas 2 letras, pois configuramos o filtro com "min_gram": 2
+
+Como apresentado no vídeo crie o índice e insira os dadas dos produtos:
+
+Segue o JSON do índice mas agora com todos os fields e tipos do produto:
+
+PUT /produtos_autocomplete
+{
+  "settings": {
+    "index": {
+      "number_of_shards": 3,
+      "number_of_replicas": 0
+    },
+    "analysis" : {
+      "filter": {
+        "filtro_autocomplete": {
+          "type": "edge_ngram",
+          "min_gram": 2,
+          "max_gram": 20
+        }
+      },
+      "analyzer": {
+        "autocomplete" : {
+          "type": "custom",
+          "tokenizer": "standard",
+          "filter" : [
+            "lowercase",
+            "filtro_autocomplete"
+          ]
+        }
+      }
+    }
+  },
+  "mappings": {
+    "v1": {
+      "_all": {
+        "type": "text",
+        "analyzer": "portuguese"
+      },
+      "properties": {
+        "nome": {
+          "fields": {
+            "original": {
+              "type": "keyword"
+            },
+            "autocomplete": {
+              "type": "text",
+              "analyzer": "autocomplete"
+            }
+          },
+          "type": "text",
+          "analyzer": "portuguese"
+        },
+        "categoria": {
+          "fields": {
+            "original": {
+              "type": "keyword"
+            }
+          },
+          "type": "text",
+          "analyzer": "portuguese"
+        },
+        "subcategoria": {
+          "fields": {
+            "original": {
+              "type": "keyword"
+            }
+          },
+          "type": "text",
+          "analyzer": "portuguese"
+        },
+        "tags": {
+          "fields": {
+            "original": {
+              "type": "keyword"
+            }
+          },
+          "type": "string",
+          "index": "analyzed",
+          "analyzer": "portuguese"
+        },
+        "fornecedor": {
+          "fields": {
+            "original": {
+              "type": "keyword",
+              "index": "not_analyzed"
+            }
+          },
+          "type": "text"
+        },
+        "preco": {
+          "type": "float"
+}}}}}
+Repare que além dos filtros edge_ngram com edge_ngram temos no field nome um novo item "autocomplete":
+
+...
+"nome": {
+  "fields": {
+    "original": {
+      "type": "keyword"
+    },
+    "autocomplete": {
+      "type": "text",
+      "analyzer": "autocomplete"
+    }
+  },
+  "type": "text",
+  "analyzer": "portuguese"
+},
+...
+
+Insira também os dados do produto no novo índice. Lembre-se, no console do Dev Tools é preciso executar cada POST separadamente:
+
+POST /produtos_autocomplete/v1/
+{
+  "nome": "Big Data rápido e fácil",
+  "categoria": "Livros",
+  "subcategoria": "Tecnologia",
+  "tags": ["impresso", "digital", "larga escala", "computação"],
+  "fornecedor": "Casa do Código",
+  "preco": 29.90
+}
+
+POST /produtos_autocomplete/v1/
+{
+  "nome": "Guia rápido e fácil para big data",
+  "categoria": "Livros",
+  "subcategoria": "Tecnologia",
+  "tags": ["impresso", "digital", "larga escala", "computação"],
+  "fornecedor": "Casa do Código",
+  "preco": 219.90
+}
+
+POST /produtos_autocomplete/v1/
+{
+  "nome": "Big Data: Técnicas e tecnologias para extração de valor dos dados",
+  "categoria": "Livros",
+  "subcategoria": "Tecnologia",
+  "tags": ["impresso", "digital", "larga escala", "computação"],
+  "fornecedor": "Casa do Código",
+  "preco": 49.90
+}
+
+POST /produtos_autocomplete/v1/
+{
+  "nome": "Think Big: Guia para sua micro empresa",
+  "categoria": "Livros",
+  "subcategoria": "Tecnologia",
+  "tags": ["impresso", "digital", "larga escala", "computação"],
+  "fornecedor": "Casa do Código",
+  "preco": 49.90
+}
+
+POST /produtos_autocomplete/v1/
+{
+  "nome": "A história do futebol brasileiro",
+  "categoria": "Livros",
+  "subcategoria": "Esportes",
+  "tags": ["impresso", "digital", "esportes", "futebol"],
+  "fornecedor": "Casa do Código",
+  "preco": 59.90
+}
+
+POST /produtos_autocomplete/v1/
+{
+  "nome": "A história do Brasil",
+  "categoria": "Livros",
+  "subcategoria": "Escolar",
+  "tags": ["impresso", "digital", "escola", "história"],
+  "fornecedor": "Casa do Código",
+  "preco": 34.90
+}
+
+POST /produtos_autocomplete/v1/
+{
+  "nome": "Contos dos melhores escritores do Brasil",
+  "categoria": "Livros",
+  "subcategoria": "Literatura",
+  "tags": ["impresso", "literatura", "nacional"],
+  "fornecedor": "Casa do Código",
+  "preco": 57.25
+}
+
+POST /produtos_autocomplete/v1/
+{
+  "nome": "Bola de futsal",
+  "categoria": "Esportes",
+  "subcategoria": "Futebol",
+  "tags": ["futebol", "amador", "quadra"],
+  "fornecedor": "Irmãos Silveira Esportes",
+  "preco": 29.90
+}
+
+POST /produtos_autocomplete/v1/
+{
+  "nome": "Camiseta Seleção Brasileira",
+  "categoria": "Roupas",
+  "subcategoria": "Esportes",
+  "tags": ["futebol", "amador", "seleção", "amarelinha"],
+  "fornecedor": "Irmãos Silveira Esportes",
+  "preco": 129.90
+}
+
+POST /produtos_autocomplete/v1/
+{
+  "nome": "Chuteira de Futebol",
+  "categoria": "Calçados",
+  "subcategoria": "Esportes",
+  "tags": ["futebol", "amador", "campo", "amarelinha"],
+  "fornecedor": "Irmãos Silveira Esportes",
+  "preco": 129.90
+}
+
+Agora, para testar, execute uma query match_all para receber todos os produtos:
+
+GET /produtos_autocomplete/_search
+{
+    "query": {
+        "match_all": {}
+    }
+}
+
+Aula 1
+
+Segue o script utilizado para criação do índice produtos:
+
+PUT /produtos
+{
+  "settings": {
+    "index": {
+      "number_of_shards": 3,
+      "number_of_replicas": 0
+    }
+  },
+  "mappings": {
+    "v1": {
+      "_all": {
+        "type": "text",
+        "analyzer": "portuguese"
+      },
+      "properties": {
+        "nome": {
+          "fields": {
+            "original": {
+              "type": "keyword"
+            }
+          },
+          "type": "text",
+          "analyzer": "portuguese"
+        },
+        "categoria": {
+          "fields": {
+            "original": {
+              "type": "keyword"
+            }
+          },
+          "type": "text",
+          "analyzer": "portuguese"
+        },
+        "subcategoria": {
+          "fields": {
+            "original": {
+              "type": "keyword"
+            }
+          },
+          "type": "text",
+          "analyzer": "portuguese"
+        },
+        "tags": {
+          "fields": {
+            "original": {
+              "type": "keyword"
+            }
+          },
+          "type": "string",
+          "index": "analyzed",
+          "analyzer": "portuguese"
+        },
+        "fornecedor": {
+          "fields": {
+            "original": {
+              "type": "keyword",
+              "index": "not_analyzed"
+            }
+          },
+          "type": "text"
+        },
+        "preco": {
+          "type": "float"
+        }
+      }
+    }
+  }
+}
+Também segue o json para inserir produtos no índice:
+
+POST /produtos/v1/
+{
+  "nome": "Scala: Como escalar sua produtividade",
+  "categoria": "Livros",
+  "subcategoria": "Tecnologia",
+  "tags": ["impresso", "digital", "scala", "programação funcional", "computação", "imutabilidade"],
+  "fornecedor": "Casa do Código",
+  "preco": 69.90
+}
+
+POST /produtos/v1/
+{
+  "nome": "Big Data: Técnicas e tecnologias para extração de valor dos dados",
+  "categoria": "Livros",
+  "subcategoria": "Tecnologia",
+  "tags": ["impresso", "digital", "larga escala", "computação"],
+  "fornecedor": "Casa do Código",
+  "preco": 49.90
+}
+
+POST /produtos/v1/
+{
+  "nome": "A história do futebol brasileiro",
+  "categoria": "Livros",
+  "subcategoria": "Esportes",
+  "tags": ["impresso", "digital", "esportes", "futebol"],
+  "fornecedor": "Casa do Código",
+  "preco": 59.90
+}
+
+POST /produtos/v1/
+{
+  "nome": "Bola de futsal",
+  "categoria": "Esportes",
+  "subcategoria": "Futebol",
+  "tags": ["futebol", "amador", "quadra"],
+  "fornecedor": "Irmãos Silveira Esportes",
+  "preco": 29.90
+}
+
+POST /produtos/v1/
+{
+  "nome": "Camiseta Seleção Brasileira",
+  "categoria": "Roupas",
+  "subcategoria": "Esportes",
+  "tags": ["futebol", "amador", "seleção", "amarelinha"],
+  "fornecedor": "Irmãos Silveira Esportes",
+  "preco": 129.90
+}
+
+POST /produtos/v1/
+{
+  "nome": "Chuteira de Futebol",
+  "categoria": "Calçados",
+  "subcategoria": "Esportes",
+  "tags": ["futebol", "amador", "campo", "amarelinha"],
+  "fornecedor": "Irmãos Silveira Esportes",
+  "preco": 129.90
+}
+
+Aula 2
+
+Seguem os exemplos utilizados durante do curso:
+
+// o famoso select * from
+GET /produtos/v1/_search
+{
+  "query" : {
+    "match_all": {
+    }
+  }
+}
+
+
+GET /produtos/v1/_search
+{
+  "query" : {
+    "match": {
+      "categoria": "calçados"
+    }
+  }
+}
+
+GET /produtos/v1/_search
+{
+  "query" : {
+    "match": {
+      "tags": "digital"
+    }
+  }
+}
+
+// equivalente ao exemplo tags:impresso AND nome:scala
+GET /produtos/v1/_search
+{
+  "query" : {
+    "bool": {
+      "must": [
+        {"match": {"tags": "impresso" }},
+        {"match": {"nome": "scala" }}
+      ]
+    }
+  }
+}
+
+// categoria = livro AND
+// (tags = imutabilidade OR tags = larga escala)
+// AND NOT(nome = scala)
+GET /produtos/v1/_search
+{
+  "query" : {
+    "bool": {
+      "must": {"match": {"categoria": "livro" }},
+      "should": [
+        {"match": {"tags": "imutabilidade" }},
+        {"match": {"tags": "larga escala" }}
+      ],
+      "must_not": {"match": {"nome": "scala"}}
+    }
+  }
+}
+
+Seguem os exemplos usados nesse video:
+
+GET /produtos/v1/_search
+{
+  "query" : {
+    "term": {
+      "tags": "escala"
+    }
+  }
+}
+
+GET /produtos/v1/_search
+{
+  "query" : {
+    "terms": {
+      "tags": ["digital", "quadra", "amador"]
+    }
+  }
+}
+
+GET /produtos/v1/_search
+{
+  "query" : {
+    "range": {
+      "preco": {
+        "lte": 100.0
+      }
+    }
+  }
+}
+
+GET /produtos/v1/_search
+{
+  "query" : {
+    "bool": {
+      "filter": {
+        "terms": {
+          "tags": ["digital", "quadra", "amador"]
+        }
+      }
+    }
+  }
+}
+
+GET /produtos/v1/_search
+{
+  "query" : {
+    "bool": {
+      "must": {
+        "match": {"tags": "esportes"}},
+      "filter": {
+        "range": {"preco": {"lte": 100}}
+}}}}
+
+-- exemplo de query e filter
+GET /produtos/v1/_search
+{
+  "query" : {
+    "bool": {
+      "must": {
+        "match": {
+          "tags": "futebol"
+        }
+      },
+      "filter": {
+        "bool": {
+          "must": [
+            {"range": {"preco": {"lte": 100}}},
+            {"term": {"categoria.original": "Livros"}}
+          ]
+        }
+      }
+    }
+  }
+}
+
+Aula 3
+
+Segue o JSON da pesquisa utilizada no vídeo:
+
+GET /produtos/v1/_search
+{
+  "query" : {
+    "match": {
+      "nome": "big data futebol brasileiro"
+    }
+  }
+}
+
+GET /produtos/v1/_search
+{
+  "query" : {
+    "match": {
+      "nome": "tecnologias tecnica futebol"
+    }
+  }
+}
+
+GET /produtos/v1/_search
+{
+  "query" : {
+    "match": {
+      "nome": "imutavel futebol"
+    }
+  }
+}
+
+Seguem as pesquisas executadas no video:
+
+GET /produtos/v1/_search
+{
+  "query" : {
+    "match": {
+      "nome": "big data futebol brasileiro"
+    }
+  }
+}
+
+GET /produtos/v1/_search
+{
+  "query" : {
+    "bool": {
+      "should": [
+        {"term": {"nome": "big"}},
+        {"term": {"nome": "brasileir"}},
+        {"term": {"nome": "futebol"}},
+        {"term": {"nome": "data"}}
+      ]
+    }
+  }
+}
+
+Seguem as pesquisas utilizadas nessa aula:
+
+GET /produtos/v1/_search
+{
+  "query" : {
+    "match": {
+      "nome": {
+        "query" : "big data futebol brasileiro",
+        "operator": "and"
+      }
+    }
+  }
+}
+
+GET /produtos/v1/_search
+{
+  "query" : {
+    "match": {
+      "nome": {
+        "query" : "brasileiro futebol",
+        "operator": "and"
+      }
+    }
+  }
+}
+
+GET /produtos/v1/_search
+{
+  "query" : {
+    "match": {
+      "nome": {
+        "query" : "brasileiro futebol",
+        "operator": "or"
+      }
+    }
+  }
+}
+
+GET /produtos/v1/_search
+{
+  "query" : {
+    "match": {
+      "nome": {
+        "query" : "big data futebol brasileiro",
+        "minimum_should_match": "50%"
+      }
+    }
+  }
+}
+
+Aula 4
+
+As queries utilizadas neste vídeo são:
+
+GET /produtos/v1/_search
+{
+  "query" : {
+    "bool": {
+      "should": [
+        {
+          "match": {
+            "nome": {
+              "query" : "big data",
+              "operator": "and"
+            }
+          }
+        },
+        {
+          "match": {
+            "nome": {
+              "query" : "brasileiro futebol"
+            }
+          }
+        }
+      ]
+    }
+  }
+}
+
+GET /produtos/v1/_search
+{
+  "query" : {
+    "bool": {
+      "should": [
+        {
+          "match": {
+            "nome": {
+              "query" : "big data",
+              "operator": "and",
+              "boost": "2"
+            }
+          }
+        },
+        {
+          "match": {
+            "nome": {
+              "query" : "brasileiro futebol"
+            }
+          }
+        }
+      ]
+    }
+  }
+}
+
+GET /produtos/v1/_search
+{
+  "query" : {
+    "bool": {
+      "should": [
+        {
+          "match": {
+            "nome": {
+              "query" : "big data",
+              "operator": "and",
+              "boost": "0.2"
+            }
+          }
+        },
+        {
+          "match": {
+            "nome": {
+              "query" : "brasileiro futebol"
+            }
+          }
+        }
+      ]
+    }
+  }
+}
+
+Aula 5
+
+As querys utilizadas neste vídeo são:
+
+GET /produtos/v1/_search
+{
+  "query" : {
+    "query_string": {
+        "query" : "tags:ama*"
+    }
+  }
+}
+GET /produtos/v1/_search
+{
+  "query" : {
+    "prefix": {
+      "tags": "ama"
+    }
+  }
+}
+
+As queries utilizadas neste vídeo são:
+
+GET /produtos/v1/_search
+{
+  "query" : {
+    "match_phrase_prefix": {
+      "nome": "big d"
+    }
+  }
+}
+GET /produtos/v1/_search
+{
+  "query" : {
+    "match_phrase_prefix": {
+      "nome": "data b"
+    }
+  }
+}
+
+Aula 6
+
+Seguem as queries utilizadas nessa aula:
+
+GET /_analyze
+{
+  "tokenizer": {
+    "type": "ngram"
+  },
+  "text": "Big Data"
+}
+
+GET /_analyze
+{
+  "tokenizer": {
+    "type": "ngram",
+    "max_gram": 10
+  },
+  "text": "Big Data"
+}
+
+GET /_analyze
+{
+  "tokenizer": {
+    "type": "ngram",
+    "min_gram": 2,
+    "max_gram": 10
+  },
+  "text": "Big Data"
+}
+
+GET /_analyze
+{
+  "tokenizer": {
+    "type": "edge_ngram"
+  },
+  "text": "Big Data"
+}
+
+GET /_analyze
+{
+  "tokenizer": {
+    "type": "edge_ngram",
+    "max_gram": 10
+  },
+  "text": "Big Data"
+}
+
+GET /_analyze
+{
+  "tokenizer": {
+    "type": "edge_ngram",
+    "min_gram": 2,
+    "max_gram": 10
+  },
+  "text": "Big Data"
+}
+
+Aula 7
+
+Segue o JSON para criar o índice:
+
+PUT /produtos_autocomplete
+{
+  "settings": {
+    "index": {
+      "number_of_shards": 3,
+      "number_of_replicas": 0
+    },
+    "analysis" : {
+      "filter": {
+        "filtro_autocomplete": {
+          "type": "edge_ngram",
+          "min_gram": 2,
+          "max_gram": 20
+        }
+      },
+      "analyzer": {
+        "autocomplete" : {
+          "type": "custom",
+          "tokenizer": "standard",
+          "filter" : [
+            "lowercase",
+            "filtro_autocomplete"
+          ]
+        }
+      }
+    }
+  },
+  "mappings": {
+    "v1": {
+      "_all": {
+        "type": "text",
+        "analyzer": "portuguese"
+      },
+      "properties": {
+        "nome": {
+          "fields": {
+            "original": {
+              "type": "keyword"
+            },
+            "autocomplete": {
+              "type": "text",
+              "analyzer": "autocomplete"
+            }
+          },
+          "type": "text",
+          "analyzer": "portuguese"
+        },
+        "categoria": {
+          "fields": {
+            "original": {
+              "type": "keyword"
+            }
+          },
+          "type": "text",
+          "analyzer": "portuguese"
+        },
+        "subcategoria": {
+          "fields": {
+            "original": {
+              "type": "keyword"
+            }
+          },
+          "type": "text",
+          "analyzer": "portuguese"
+        },
+        "tags": {
+          "fields": {
+            "original": {
+              "type": "keyword"
+            }
+          },
+          "type": "string",
+          "index": "analyzed",
+          "analyzer": "portuguese"
+        },
+        "fornecedor": {
+          "fields": {
+            "original": {
+              "type": "keyword",
+              "index": "not_analyzed"
+            }
+          },
+          "type": "text"
+        },
+        "preco": {
+          "type": "float"
+        }
+      }
+    }
+  }
+}
+
+Os dados dos produtos:
+
+POST /produtos_autocomplete/v1/
+{
+  "nome": "Big Data rápido e fácil",
+  "categoria": "Livros",
+  "subcategoria": "Tecnologia",
+  "tags": ["impresso", "digital", "larga escala", "computação"],
+  "fornecedor": "Casa do Código",
+  "preco": 29.90
+}
+
+POST /produtos_autocomplete/v1/
+{
+  "nome": "Guia rápido e fácil para big data",
+  "categoria": "Livros",
+  "subcategoria": "Tecnologia",
+  "tags": ["impresso", "digital", "larga escala", "computação"],
+  "fornecedor": "Casa do Código",
+  "preco": 219.90
+}
+
+POST /produtos_autocomplete/v1/
+{
+  "nome": "Big Data: Técnicas e tecnologias para extração de valor dos dados",
+  "categoria": "Livros",
+  "subcategoria": "Tecnologia",
+  "tags": ["impresso", "digital", "larga escala", "computação"],
+  "fornecedor": "Casa do Código",
+  "preco": 49.90
+}
+
+POST /produtos_autocomplete/v1/
+{
+  "nome": "Think Big: Guia para sua micro empresa",
+  "categoria": "Livros",
+  "subcategoria": "Tecnologia",
+  "tags": ["impresso", "digital", "larga escala", "computação"],
+  "fornecedor": "Casa do Código",
+  "preco": 49.90
+}
+
+POST /produtos_autocomplete/v1/
+{
+  "nome": "A história do futebol brasileiro",
+  "categoria": "Livros",
+  "subcategoria": "Esportes",
+  "tags": ["impresso", "digital", "esportes", "futebol"],
+  "fornecedor": "Casa do Código",
+  "preco": 59.90
+}
+
+POST /produtos_autocomplete/v1/
+{
+  "nome": "A história do Brasil",
+  "categoria": "Livros",
+  "subcategoria": "Escolar",
+  "tags": ["impresso", "digital", "escola", "história"],
+  "fornecedor": "Casa do Código",
+  "preco": 34.90
+}
+
+POST /produtos_autocomplete/v1/
+{
+  "nome": "Contos dos melhores escritores do Brasil",
+  "categoria": "Livros",
+  "subcategoria": "Literatura",
+  "tags": ["impresso", "literatura", "nacional"],
+  "fornecedor": "Casa do Código",
+  "preco": 57.25
+}
+
+POST /produtos_autocomplete/v1/
+{
+  "nome": "Bola de futsal",
+  "categoria": "Esportes",
+  "subcategoria": "Futebol",
+  "tags": ["futebol", "amador", "quadra"],
+  "fornecedor": "Irmãos Silveira Esportes",
+  "preco": 29.90
+}
+
+POST /produtos_autocomplete/v1/
+{
+  "nome": "Camiseta Seleção Brasileira",
+  "categoria": "Roupas",
+  "subcategoria": "Esportes",
+  "tags": ["futebol", "amador", "seleção", "amarelinha"],
+  "fornecedor": "Irmãos Silveira Esportes",
+  "preco": 129.90
+}
+
+POST /produtos_autocomplete/v1/
+{
+  "nome": "Chuteira de Futebol",
+  "categoria": "Calçados",
+  "subcategoria": "Esportes",
+  "tags": ["futebol", "amador", "campo", "amarelinha"],
+  "fornecedor": "Irmãos Silveira Esportes",
+  "preco": 129.90
+}
+
+E as pesquisas:
+
+// fazer passo a passo
+// 1- simular busca
+GET /produtos_autocomplete/_search
+{
+  "query" : {
+    "match" : {
+      "nome.autocomplete": "data bi"
+    }
+  }
+}
+
+// 2- highlight dos termos
+GET /produtos_autocomplete/_search
+{
+  "query" : {
+    "match" : {
+      "nome.autocomplete": "data bi"
+    }
+  },
+  "highlight" : {
+    "fields" : {
+        "nome.autocomplete" : {}
+    }
+  }
+}
+
+// 3- includir apenas o fornecedor no resultado, alem do highlight
+GET /produtos_autocomplete/_search
+{
+  "_source": ["fornecedor"],
+  "query" : {
+    "match" : {
+      "nome.autocomplete": "data bi"
+    }
+  },
+  "highlight" : {
+    "fields" : {
+        "nome.autocomplete" : {}
+    }
+  }
+}
+

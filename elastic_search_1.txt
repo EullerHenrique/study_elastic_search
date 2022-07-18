@@ -238,6 +238,36 @@ como pesquisa ou recuperação de um documento.
 
 Fonte": https://www.infomach.com.br/o-que-e-elasticsearch-como-funciona-e-para-que-serve/
 
+Shards e Réplicas
+Shard é um termo que passou a ser muito utilizado quando pensamos em particionamento horizontal de dados. 
+Para colocar de modo mais claro, pense que temos um volume muito grande de dados, tão grande, que é inviável 
+em armazená-lo em um único local. Nosso instinto de bom engenheiro de software nos diz que deveríamos quebrar 
+este grande volume de dados em blocos menores, já que fica mais fácil de operar com blocos menores durante 
+operações como cópia, remoção ou relocação. Cada pedacinho resultante desta quebra é o que chamamos de shard.
+
+
+Shards são de altíssima importância quando pensamos em escalabilidade horizontal. Podemos quebrar grandes blocos 
+de dados em pedaços menores e distribuí-los entre diferentes máquinas em um cluster. Dado o número de shards, 
+podemos usar uma função de espalhamento (hashing) para definir em qual shard um determinado documento deve ser 
+armazenado. Isso é exatamente o que o ElasticSearch faz (bem, o processo na prática é um pouco mais complexo, 
+mas a ideia é a mesma). A escalabilidade horizontal para o volume de dados que foi comentada no capítulo anterior 
+é implementada com o uso de shards.
+
+Como temos diversas shards, podemos criar cópias, chamadas de réplicas, de uma mesma shard e armazená-las em outras 
+máquinas. Isso funciona como uma espécie de backup dos dados, com uma pequena ressalva: réplicas são atualizadas 
+constantemente e podem ser utilizadas para leitura durante a execução de consultas. Existem dois tipos de shards 
+no ElasticSeach:
+
+Shard primária (primary shards): é a shard onde as operações de escrita como criação, atualização ou remoção de um 
+documento acontece primeiro.
+Shard réplica (replica shard): é a shard que, uma vez que a operação de escrita tenha sido concluída com sucesso na 
+sua respectiva shard primária, recebe a mesma operação para que ela seja replicada. A operação só será confirmada 
+para o cliente quando todas as réplicas confirmarem a replicação. Logo, quando recebemos o HTTP OK para uma operação 
+de escrita, sabemos que a informação esta segura em todas as réplicas.
+* Importante: O número de *shards é definido no momento da criação do índice e não pode ser alterado. O número de 
+réplicas também é definido no momento da criação do índice, porém pode ser alterado com o passar do tempo. É muito 
+importante escolher bem o número de shards durante a criação do índice. A escolha deste número depende do volume de 
+informações que queremos armazenar nas shards. Em geral, queremos shards com alguns gigabytes.**
 Outras fontes:
 
 https://github.com/alefeans/elastic-stack/blob/master/pages/node_cluster.md
@@ -520,6 +550,38 @@ c. IPv6
 d. Informação geoespacial
 
 Aula 5
+
+Full-text search e analyzers
+Analyzers são algoritmos fundamentais para o que chamamos de full-text search, ou busca de texto cheio. Vale destacar um conceito fundamental em relação a busca de texto cheio. Quando fazemos buscas exatas o resultado é binário, 
+ou seja, "sim" caso o termo procurado exista da maneira que foi informado ou "não", caso contrário. No caso de busca de texto cheio, a ideia é diferente. Ao invés de perguntarmos "Este documento possui exatamente os termos utilizados 
+na busca", estamos interessados em "O quão bem este documento casa com os termos da busca".
+
+Vamos ver alguns exemplos. No primeiro exemplo, queremos procurar pelo termo "EUA" mas estamos satisfeitos com documentos com os termos "Estados Unidos da América" ou "Estados Unidos". No segundo exemplo, queremos procurar pelo termo 
+"musica", porém estamos satisfeitos se encontrarmos documentos com os termos "bossa nova", "rock", "pagode" e "samba", pois eles se relacionam com música.
+
+Analyzers são utilizados para processar nossos documentos e construir uma estrutura comum no mundo de buscas chamada de índice invertido. De maneira simplista, podemos pensar nos analyzers como algoritmos que processam o texto e geram 
+entradas relevantes com os termos do documento, possivelmente com sinônimos, no índice invertido. Estas entradas possuem ponteiros para o documento. Os termos consultados também passam pelos mesmos algoritmos e os termos processados 
+são utilizados para fazer a busca contra o índice invertido. Este processo ficará bem claro em alguns instantes.
+
+Analyzers existentes
+ElasticSearch possui diversos analyzers pré-definidos que podem ser associados à atributos durante a criação do mapping para o tipo. 
+Destacamos 4 analyzers que devemos conhecer.
+
+Analyzer padrão: Este é o analyzer padrão usado pelo ElasticSearch e em geral funciona bem independente do idioma. Ele funciona quebrando o texto em palavras removendo pontuações e passando todo conteúdo para letras minúsculas. 
+Números existentes no texto são mantidos. Por exemplo: "Eu nasci há 10 mil (sim, 10 mil) anos atrás" gera as seguintes entradas "eu", "nasci", "há", "10", "mil", "sim", "10", "mil", "anos", "atrás".
+
+Analyzer simples: Quebra o texto em tudo o que não seja uma letra e passando todo o texto para letras minúsculas. Como números não são letras, eles não geram entradas. E.g.: "Eu nasci há 10 mil (sim, 10 mil) anos atrás" gera as 
+seguintes entradas "eu", "nasci", "há", "mil", "sim", "mil", "anos", "atrás".
+
+Analyzer de espaço em branco: Quebra o texto por espaços em branco. Não há alteração na caixa das letras. Por exemplo: "Eu nasci há 10 mil (sim, 10 mil) anos atrás" gera as seguintes entradas "Eu", "nasci", "há", "10", "mil", 
+"(sim", "10", "mil)", "anos", "atrás".
+
+Analyzers específicos para idiomas: São analyzers que quebram o texto assim como o analyzer padrão, porém são capazes de aplicar peculiaridades do idioma e melhorar a geração das entradas para um idioma em específico. Técnicas 
+como singularização dos termos, remoção de palavras que não possuem relevância para o resultado, como palavras comuns do idioma e uso da palavra na sua forma mais raíz (conhecido como stemming), são aplicadas.
+
+Como passo adicional, analyzers ainda podem ser customizados caso necessário. Para mais detalhes veja https://www.elastic.co/guide/en/elasticsearch/reference/current/analysis-analyzers.html
+
+O mais legal é que existe uma API chamada _analyze que nos permite observar como um texto será analisado.
 
 GET catalogo/_search?q=musica
 
